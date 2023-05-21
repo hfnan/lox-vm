@@ -3,6 +3,11 @@ use crate::value::*;
 #[repr(u8)]
 pub enum OpCode {
     OpConstant,
+    OpAdd, 
+    OpSubtract,
+    OpMultiply,
+    OpDivide,
+    OpNegate,
     OpReturn,
 }
 
@@ -38,9 +43,21 @@ impl Chunk {
         self.lines.push(line)
     }
 
+    pub fn get(&self, ip: usize) -> u8 {
+        self.code[ip]
+    }
+
     pub fn add_constant(&mut self, value: Value) -> usize {
         self.constants.write(value);
         self.constants.len() - 1
+    }
+
+    pub fn get_constant(&self, seq: usize) -> Value {
+        self.constants.get(seq)
+    }
+
+    pub fn print_value(&self, constant: Value) {
+        print!("{constant}")
     }
 
     pub fn disassamble(&self, name: &str) {
@@ -52,7 +69,7 @@ impl Chunk {
         }
     }
 
-    fn disassamble_instruction(&self, offset: usize) -> usize {
+    pub fn disassamble_instruction(&self, offset: usize) -> usize {
         print!("{offset:04} ");
 
         if offset > 0 && self.lines[offset] == self.lines[offset - 1] {
@@ -65,6 +82,11 @@ impl Chunk {
         match instruction {
             x if opcode!(OpCode::OpConstant, x) => self.constant_instruction("OP_CONSTANT", offset),
             x if opcode!(OpCode::OpReturn, x) => self.simple_instruction("OP_RETURN", offset),
+            x if opcode!(OpCode::OpNegate, x) => self.simple_instruction("OP_NEGATE", offset),
+            x if opcode!(OpCode::OpAdd, x) => self.simple_instruction("OP_ADD", offset),
+            x if opcode!(OpCode::OpSubtract, x) => self.simple_instruction("OP_SUBTRACT", offset),
+            x if opcode!(OpCode::OpMultiply, x) => self.simple_instruction("OP_MULTIPLY", offset),
+            x if opcode!(OpCode::OpDivide, x) => self.simple_instruction("OP_DIVIDE", offset),
             _ => {
                 println!("Unknown opcode {instruction}");
                 offset + 1
@@ -73,9 +95,10 @@ impl Chunk {
     }
 
     fn constant_instruction(&self, name: &str, offset: usize) -> usize {
-        let constant = self.code[offset + 1];
-        print!("{name:-16} {constant:4} '");
-        self.constants.print_value(constant as usize);
+        let seq = self.code[offset + 1];
+        let constant = self.constants.get(seq as usize);
+        print!("{name:-16} {seq:4} '");
+        self.print_value(constant);
         println!("'");
         offset + 2
     }

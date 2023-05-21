@@ -17,7 +17,8 @@ impl ValueArray {
         self.values.len()
     }
 
-    pub fn print_value(&self, constant: usize) {
-        print!("{}", self.values[constant])
+
+    pub fn get(&self, seq: usize) -> Value {
+        self.values[seq]
     }
 }
