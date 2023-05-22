@@ -2,32 +2,54 @@
 mod chunk;
 mod value;
 mod vm;
+mod compiler;
+mod scanner;
+
+use std::io::{Write, BufRead};
 
 use chunk::*;
-use vm::VM;
+use vm::*;
 
 fn main() {
     let mut vm = VM::new();
 
-    let mut chunk = Chunk::new();
-    
-    let mut constant = chunk.add_constant(1.2);
-    chunk.write(OpCode::OpConstant, 123);
-    chunk.write(constant as u8, 123);
-    constant = chunk.add_constant(3.4);
-    chunk.write(OpCode::OpConstant, 123);
-    chunk.write(constant as u8, 123);
+    let args: Vec<String> = std::env::args().collect();
 
-    chunk.write(OpCode::OpAdd, 123);
-
-    constant = chunk.add_constant(5.6);
-    chunk.write(OpCode::OpConstant, 123);
-    chunk.write(constant as u8, 123);
-    
-    chunk.write(OpCode::OpDivide, 123);
-    chunk.write(OpCode::OpNegate, 123);
-    chunk.write(OpCode::OpReturn, 123);
-    chunk.disassamble("test chunk");
-
-    match vm.interpret(&chunk) { _ => {}};
+    match args.len() {
+        1 => repl(&mut vm),
+        2 => run_file(&args[1], &mut vm),
+        _ => {
+            println!("Usage: rlox [path]");
+            std::process::exit(64);
+        }
+    }
 }
+
+fn repl(vm: &mut VM) {
+    loop {
+        print!("> ");
+        std::io::stdout().flush().unwrap();
+        
+        let mut line = String::new();
+        std::io::stdin().lock().read_line(&mut line).unwrap();
+
+        if line.is_empty() {
+            println!();
+            break;
+        }
+
+        vm.interpret(&line); 
+    }
+}
+
+fn run_file(path: &str, vm: &mut VM) {
+    let source = std::fs::read_to_string(path).unwrap();
+    let result = vm.interpret(&source);
+
+    match result {
+        InterpretResult::Err(InterpretError::CompilerError) => std::process::exit(65),
+        InterpretResult::Err(InterpretError::RuntimeError) => std::process::exit(70),
+        _ => {}
+    }
+}
+

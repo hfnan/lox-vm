@@ -2,13 +2,13 @@ use crate::value::*;
 
 #[repr(u8)]
 pub enum OpCode {
-    OpConstant,
-    OpAdd, 
-    OpSubtract,
-    OpMultiply,
-    OpDivide,
-    OpNegate,
-    OpReturn,
+    Constant,
+    Add, 
+    Subtract,
+    Multiply,
+    Divide,
+    Negate,
+    Return,
 }
 
 impl Into<u8> for OpCode {
@@ -80,13 +80,13 @@ impl Chunk {
         
         let instruction = self.code[offset];
         match instruction {
-            x if opcode!(OpCode::OpConstant, x) => self.constant_instruction("OP_CONSTANT", offset),
-            x if opcode!(OpCode::OpReturn, x) => self.simple_instruction("OP_RETURN", offset),
-            x if opcode!(OpCode::OpNegate, x) => self.simple_instruction("OP_NEGATE", offset),
-            x if opcode!(OpCode::OpAdd, x) => self.simple_instruction("OP_ADD", offset),
-            x if opcode!(OpCode::OpSubtract, x) => self.simple_instruction("OP_SUBTRACT", offset),
-            x if opcode!(OpCode::OpMultiply, x) => self.simple_instruction("OP_MULTIPLY", offset),
-            x if opcode!(OpCode::OpDivide, x) => self.simple_instruction("OP_DIVIDE", offset),
+            x if opcode!(OpCode::Constant, x) => self.constant_instruction("OP_CONSTANT", offset),
+            x if opcode!(OpCode::Return, x) => self.simple_instruction("OP_RETURN", offset),
+            x if opcode!(OpCode::Negate, x) => self.simple_instruction("OP_NEGATE", offset),
+            x if opcode!(OpCode::Add, x) => self.simple_instruction("OP_ADD", offset),
+            x if opcode!(OpCode::Subtract, x) => self.simple_instruction("OP_SUBTRACT", offset),
+            x if opcode!(OpCode::Multiply, x) => self.simple_instruction("OP_MULTIPLY", offset),
+            x if opcode!(OpCode::Divide, x) => self.simple_instruction("OP_DIVIDE", offset),
             _ => {
                 println!("Unknown opcode {instruction}");
                 offset + 1
