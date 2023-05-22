@@ -1,3 +1,5 @@
+use enum_iterator::Sequence;
+
 macro_rules! is_match_eq {
     ($self: expr, $t1: expr, $t2: expr) => {
         {
@@ -19,13 +21,15 @@ pub struct Scanner {
     current: usize,
     line: usize,
 }
+
+#[derive(Clone, Default, Debug)]
 pub struct Token {
     pub t: TokenType,
     pub lexme: String,
     pub line: usize,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default, Copy, Sequence)]
 pub enum TokenType {
     LeftParen,
     RightParen,
@@ -67,6 +71,7 @@ pub enum TokenType {
     While,
     // Break,
     Eof,
+    #[default]
     Error,
 }
 
@@ -128,8 +133,7 @@ impl Scanner {
     }
 
     fn is_match(&mut self, expected: char) -> bool {
-        if self.is_at_end() {false}
-        else if self.source[self.current] != expected {false}
+        if self.is_at_end() || self.source[self.current] != expected {false}
         else {
             self.current += 1;
             true
@@ -180,7 +184,7 @@ impl Scanner {
             "fun" => TokenType::Fun,
             "this" => TokenType::This,
             "true" => TokenType::True,
-            
+
             _ => TokenType::Identifier,
         }
     }

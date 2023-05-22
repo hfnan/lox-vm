@@ -6,8 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
+enum-iterator = "1.4.1"
 
 [features]
-default = ["debug_trace_execution"]
+default = ["debug_print_code", "debug_trace_execution"]
 debug_trace_execution = []
+debug_print_code = []

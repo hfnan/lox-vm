@@ -1,6 +1,15 @@
+use enum_iterator::Sequence;
+
 use crate::value::*;
 
+macro_rules! code {
+    ($code: expr, $x: expr) => {
+        $code as u8 == $x
+    };
+}
+
 #[repr(u8)]
+#[derive(Sequence, Clone)]
 pub enum OpCode {
     Constant,
     Add, 
@@ -9,19 +18,26 @@ pub enum OpCode {
     Divide,
     Negate,
     Return,
+    Unknown,
 }
 
-impl Into<u8> for OpCode {
-    fn into(self) -> u8 {
-        self as u8
+impl From<OpCode> for u8 {
+    fn from(value: OpCode) -> Self {
+        value as u8
     }
 }
 
-macro_rules! opcode {
-    ($code: expr, $x: expr) => {
-         $code as u8 == $x
-    };
-}   
+impl From<u8> for OpCode {
+    fn from(value: u8) -> Self {
+        for i in enum_iterator::all::<Self>() {
+            if code!(i.clone(), value) {
+                return i;
+            } 
+        }
+        OpCode::Unknown
+    }
+}
+   
 
 pub struct Chunk {
     code: Vec<u8>,
@@ -79,14 +95,14 @@ impl Chunk {
         }
         
         let instruction = self.code[offset];
-        match instruction {
-            x if opcode!(OpCode::Constant, x) => self.constant_instruction("OP_CONSTANT", offset),
-            x if opcode!(OpCode::Return, x) => self.simple_instruction("OP_RETURN", offset),
-            x if opcode!(OpCode::Negate, x) => self.simple_instruction("OP_NEGATE", offset),
-            x if opcode!(OpCode::Add, x) => self.simple_instruction("OP_ADD", offset),
-            x if opcode!(OpCode::Subtract, x) => self.simple_instruction("OP_SUBTRACT", offset),
-            x if opcode!(OpCode::Multiply, x) => self.simple_instruction("OP_MULTIPLY", offset),
-            x if opcode!(OpCode::Divide, x) => self.simple_instruction("OP_DIVIDE", offset),
+        match instruction.into() {
+            OpCode::Constant => self.constant_instruction("OP_CONSTANT", offset),
+            OpCode::Return => self.simple_instruction("OP_RETURN", offset),
+            OpCode::Negate => self.simple_instruction("OP_NEGATE", offset),
+            OpCode::Add => self.simple_instruction("OP_ADD", offset),
+            OpCode::Subtract => self.simple_instruction("OP_SUBTRACT", offset),
+            OpCode::Multiply => self.simple_instruction("OP_MULTIPLY", offset),
+            OpCode::Divide => self.simple_instruction("OP_DIVIDE", offset),
             _ => {
                 println!("Unknown opcode {instruction}");
                 offset + 1

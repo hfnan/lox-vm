@@ -27,9 +27,11 @@ impl VM {
     }
 
     pub fn interpret(&mut self, source: &str) -> InterpretResult<()> {
-        compile(source);
-        Ok(())
-        // self.run(chunk)
+        let mut chunk = Chunk::new();
+        let mut compiler = Compiler::new(source, &mut chunk);
+        compiler.compile()?;
+        self.ip = 0;
+        self.run(&chunk)
     }
 
     fn run(&mut self, chunk: &Chunk) -> InterpretResult<()> {
@@ -44,24 +46,24 @@ impl VM {
             }
 
             let instruction = self.read_byte(chunk);
-            match instruction {
-                x if opcode!(OpCode::Return, x) => {
+            match instruction.into() {
+                OpCode::Return => {
                     println!("{}", self.stack.pop().unwrap());
                     return Ok(());
                 },
-                x if opcode!(OpCode::Constant, x) => {
+                OpCode::Constant => {
                     let constant = self.read_constant(chunk);
                     self.stack.push(constant);
                 },
-                x if opcode!(OpCode::Negate, x) => {
+                OpCode::Negate => {
                     let last = self.stack.len() - 1;
                     let value = self.stack[last];
                     self.stack[last] = - value;
                 },
-                x if opcode!(OpCode::Add, x) => binary_op!(self, +),
-                x if opcode!(OpCode::Subtract, x) => binary_op!(self, -),
-                x if opcode!(OpCode::Multiply, x) => binary_op!(self, *),
-                x if opcode!(OpCode::Divide, x) => binary_op!(self, /),
+                OpCode::Add => binary_op!(self, +),
+                OpCode::Subtract => binary_op!(self, -),
+                OpCode::Multiply => binary_op!(self, *),
+                OpCode::Divide => binary_op!(self, /),
                 _ => {}
             }
         }

@@ -7,7 +7,6 @@ mod scanner;
 
 use std::io::{Write, BufRead};
 
-use chunk::*;
 use vm::*;
 
 fn main() {
@@ -38,7 +37,7 @@ fn repl(vm: &mut VM) {
             break;
         }
 
-        vm.interpret(&line); 
+        let _ = vm.interpret(&line); 
     }
 }
 
@@ -47,8 +46,8 @@ fn run_file(path: &str, vm: &mut VM) {
     let result = vm.interpret(&source);
 
     match result {
-        InterpretResult::Err(InterpretError::CompilerError) => std::process::exit(65),
-        InterpretResult::Err(InterpretError::RuntimeError) => std::process::exit(70),
+        Err(InterpretError::CompilerError) => std::process::exit(65),
+        Err(InterpretError::RuntimeError) => std::process::exit(70),
         _ => {}
     }
 }
