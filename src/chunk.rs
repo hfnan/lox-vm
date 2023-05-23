@@ -12,10 +12,17 @@ macro_rules! code {
 #[derive(Sequence, Clone)]
 pub enum OpCode {
     Constant,
+    Nil,
+    True,
+    False,
+    Equal,
+    Greater,
+    Less,
     Add, 
     Subtract,
     Multiply,
     Divide,
+    Not,
     Negate,
     Return,
     Unknown,
@@ -41,7 +48,7 @@ impl From<u8> for OpCode {
 
 pub struct Chunk {
     code: Vec<u8>,
-    lines: Vec<usize>,
+    pub lines: Vec<usize>,
     constants: ValueArray,
 }
 
@@ -73,7 +80,8 @@ impl Chunk {
     }
 
     pub fn print_value(&self, constant: Value) {
-        print!("{constant}")
+        print!("{}", constant )
+        
     }
 
     pub fn disassamble(&self, name: &str) {
@@ -97,8 +105,15 @@ impl Chunk {
         let instruction = self.code[offset];
         match instruction.into() {
             OpCode::Constant => self.constant_instruction("OP_CONSTANT", offset),
+            OpCode::Nil => self.simple_instruction("OP_NIL", offset),
+            OpCode::True => self.simple_instruction("OP_TRUE", offset),
+            OpCode::False => self.simple_instruction("OP_FALSE", offset),
+            OpCode::Equal => self.simple_instruction("OP_EQUAL", offset),
+            OpCode::Greater => self.simple_instruction("OP_GREATER", offset),
+            OpCode::Less => self.simple_instruction("OP_LESS", offset),
             OpCode::Return => self.simple_instruction("OP_RETURN", offset),
             OpCode::Negate => self.simple_instruction("OP_NEGATE", offset),
+            OpCode::Not => self.simple_instruction("OP_NOT", offset),
             OpCode::Add => self.simple_instruction("OP_ADD", offset),
             OpCode::Subtract => self.simple_instruction("OP_SUBTRACT", offset),
             OpCode::Multiply => self.simple_instruction("OP_MULTIPLY", offset),

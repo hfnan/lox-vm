@@ -1,6 +1,9 @@
 #[macro_use]
 mod chunk;
+
+#[macro_use]
 mod value;
+
 mod vm;
 mod compiler;
 mod scanner;

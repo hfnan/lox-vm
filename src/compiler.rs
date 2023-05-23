@@ -1,6 +1,6 @@
 use enum_iterator::Sequence;
 
-use crate::{scanner::*, vm::*, chunk::*, value::Value};
+use crate::{scanner::*, vm::*, chunk::*, value::*};
 
 #[derive(Default)]
 pub struct Parser {
@@ -146,11 +146,26 @@ impl<'a> Compiler<'a> {
         self.parse_precedence(rule.precedence.next().unwrap());
 
         match operator_type {
+            TokenType::BangEqual => self.emit_bytes(OpCode::Equal as u8, OpCode::Not as u8),
+            TokenType::Equal => self.emit_byte(OpCode::Equal as u8),
+            TokenType::Greater => self.emit_byte(OpCode::Greater as u8),
+            TokenType::GreaterEqual => self.emit_bytes(OpCode::Less as u8, OpCode::Not as u8),
+            TokenType::Less => self.emit_byte(OpCode::Less as u8),
+            TokenType::LessEqual => self.emit_bytes(OpCode::Greater as u8, OpCode::Not as u8),
             TokenType::Plus => self.emit_byte(OpCode::Add as u8),
             TokenType::Minus => self.emit_byte(OpCode::Subtract as u8),
             TokenType::Star => self.emit_byte(OpCode::Multiply as u8),
             TokenType::Slash => self.emit_byte(OpCode::Divide as u8),
             _ => return,
+        }
+    }
+
+    fn literal(&mut self) {
+        match self.parser.previous.t {
+            TokenType::False => self.emit_byte(OpCode::False as u8),
+            TokenType::True => self.emit_byte(OpCode::True as u8),
+            TokenType::Nil => self.emit_byte(OpCode::Nil as u8),
+            _ => ()
         }
     }
 
@@ -160,6 +175,7 @@ impl<'a> Compiler<'a> {
         self.parse_precedence(Prec::Unary);
 
         match operator_type {
+            TokenType::Bang => self.emit_byte(OpCode::Not as u8),
             TokenType::Minus => self.emit_byte(OpCode::Negate as u8),
             _ => return,
         }
@@ -188,8 +204,8 @@ impl<'a> Compiler<'a> {
     }
 
     fn number(&mut self) {
-        let value: Value = self.parser.previous.lexme.parse().unwrap();
-        self.emit_constant(value);
+        let value: f64 = self.parser.previous.lexme.parse().unwrap();
+        self.emit_constant(number_val!(value));
     }
 
     fn emit_return(&mut self) {
@@ -230,31 +246,31 @@ fn get_rule<'a>(t: TokenType) -> ParseRule<'a> {
             TokenType::SemiColon    => ParseRule::new(None, None, Prec::None), 
             TokenType::Slash        => ParseRule::new(None, Some(Compiler::binary), Prec::Factor),
             TokenType::Star         => ParseRule::new(None, Some(Compiler::binary), Prec::Factor),
-            TokenType::Bang         => ParseRule::new(None, None, Prec::None),
-            TokenType::BangEqual    => ParseRule::new(None, None, Prec::None),
+            TokenType::Bang         => ParseRule::new(Some(Compiler::unary), None, Prec::None),
             TokenType::Assign       => ParseRule::new(None, None, Prec::None),
-            TokenType::Equal        => ParseRule::new(None, None, Prec::None),
-            TokenType::Greater      => ParseRule::new(None, None, Prec::None),
-            TokenType::GreaterEqual => ParseRule::new(None, None, Prec::None),
-            TokenType::Less         => ParseRule::new(None, None, Prec::None),
-            TokenType::LessEqual    => ParseRule::new(None, None, Prec::None),
+            TokenType::BangEqual    => ParseRule::new(None, Some(Compiler::binary), Prec::Equality),
+            TokenType::Equal        => ParseRule::new(None, Some(Compiler::binary), Prec::Equality),
+            TokenType::Greater      => ParseRule::new(None, Some(Compiler::binary), Prec::Comparison),
+            TokenType::GreaterEqual => ParseRule::new(None, Some(Compiler::binary), Prec::Comparison),
+            TokenType::Less         => ParseRule::new(None, Some(Compiler::binary), Prec::Comparison),
+            TokenType::LessEqual    => ParseRule::new(None, Some(Compiler::binary), Prec::Comparison),
             TokenType::Identifier   => ParseRule::new(None, None, Prec::None),
             TokenType::String       => ParseRule::new(None, None, Prec::None),
             TokenType::Number       => ParseRule::new(Some(Compiler::number), None, Prec::None),
             TokenType::And          => ParseRule::new(None, None, Prec::None),
             TokenType::Class        => ParseRule::new(None, None, Prec::None),
             TokenType::Else         => ParseRule::new(None, None, Prec::None),
-            TokenType::False        => ParseRule::new(None, None, Prec::None),
+            TokenType::False        => ParseRule::new(Some(Compiler::literal), None, Prec::None),
             TokenType::Fun          => ParseRule::new(None, None, Prec::None),
             TokenType::For          => ParseRule::new(None, None, Prec::None),
             TokenType::If           => ParseRule::new(None, None, Prec::None),
-            TokenType::Nil          => ParseRule::new(None, None, Prec::None),
+            TokenType::Nil          => ParseRule::new(Some(Compiler::literal), None, Prec::None),
             TokenType::Or           => ParseRule::new(None, None, Prec::None),
             TokenType::Print        => ParseRule::new(None, None, Prec::None),
             TokenType::Return       => ParseRule::new(None, None, Prec::None),
             TokenType::Super        => ParseRule::new(None, None, Prec::None),
             TokenType::This         => ParseRule::new(None, None, Prec::None),
-            TokenType::True         => ParseRule::new(None, None, Prec::None),
+            TokenType::True         => ParseRule::new(Some(Compiler::literal), None, Prec::None),
             TokenType::Var          => ParseRule::new(None, None, Prec::None),
             TokenType::While        => ParseRule::new(None, None, Prec::None),
             TokenType::Eof          => ParseRule::new(None, None, Prec::None),

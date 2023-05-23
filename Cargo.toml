@@ -9,6 +9,6 @@ edition = "2021"
 enum-iterator = "1.4.1"
 
 [features]
-default = ["debug_print_code", "debug_trace_execution"]
+default = ["debug_trace_execution"]
 debug_trace_execution = []
 debug_print_code = []
